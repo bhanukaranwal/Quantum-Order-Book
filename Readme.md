@@ -596,5 +596,3 @@ The receipt or possession of the source code and/or any parts thereof does not c
 
 All rights reserved.
 ```
-
-This comprehensive README.md file provides a detailed overview of the Quantum Order Book Platform, including its features, architecture, installation instructions, usage examples, and more. It serves as the main documentation entry point for users and developers working with the platform.
