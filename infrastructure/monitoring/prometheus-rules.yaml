@@ -1,0 +1,54 @@
+        severity: warning
+        team: data
+      annotations:
+        summary: "Market data gap detected"
+        description: "{{ $labels.venue }} {{ $labels.symbol }} has experienced data gaps in the last 5 minutes."
+        runbook_url: "https://wiki.quantum-order-book.com/runbooks/market-data-gaps"
+    
+    # Order Placement Failures
+    - alert: HighOrderPlacementFailures
+      expr: sum(increase(order_placement_failures_total{job="quantum-order-book-order-service"}[5m])) / sum(increase(order_placement_attempts_total{job="quantum-order-book-order-service"}[5m])) > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        team: trading
+      annotations:
+        summary: "High order placement failure rate"
+        description: "Order placement failure rate is above 5% for more than 5 minutes: {{ $value | humanizePercentage }}"
+        runbook_url: "https://wiki.quantum-order-book.com/runbooks/order-placement-failures"
+    
+    # Unusual Trading Volume
+    - alert: UnusualTradingVolume
+      expr: sum(rate(trade_volume_total{job="quantum-order-book-market-data"}[5m])) by (symbol) / avg_over_time(sum(rate(trade_volume_total{job="quantum-order-book-market-data"}[5m])) by (symbol)[1h:5m]) > 3
+      for: 5m
+      labels:
+        severity: warning
+        team: trading
+      annotations:
+        summary: "Unusual trading volume for {{ $labels.symbol }}"
+        description: "{{ $labels.symbol }} is experiencing 3x normal trading volume over the last 5 minutes."
+        runbook_url: "https://wiki.quantum-order-book.com/runbooks/unusual-volume"
+    
+    # Websocket Connection Drops
+    - alert: HighWebsocketDisconnections
+      expr: sum(increase(websocket_disconnections_total{job=~"quantum-order-book-.*"}[5m])) by (job) > 100
+      for: 5m
+      labels:
+        severity: warning
+        team: platform
+      annotations:
+        summary: "High websocket disconnection rate for {{ $labels.job }}"
+        description: "{{ $labels.job }} has had more than 100 websocket disconnections in the last 5 minutes."
+        runbook_url: "https://wiki.quantum-order-book.com/runbooks/websocket-disconnections"
+    
+    # Slow Queries
+    - alert: SlowDatabaseQueries
+      expr: histogram_quantile(0.95, sum(rate(database_query_duration_seconds_bucket{job=~"quantum-order-book-.*"}[5m])) by (le, query_type)) > 1
+      for: 5m
+      labels:
+        severity: warning
+        team: database
+      annotations:
+        summary: "Slow database queries detected"
+        description: "95th percentile of {{ $labels.query_type }} queries is taking more than 1 second for the last 5 minutes: {{ $value | humanizeDuration }}"
+        runbook_url: "https://wiki.quantum-order-book.com/runbooks/slow-queries"
